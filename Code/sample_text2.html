@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Read Private GitHub File</title>
+    <link rel="stylesheet" href="sample_text2.css">
+</head>
+
+<body>
+
+    <h2>Read Private File from GitHub</h2>
+
+    <div class="search-bar">
+        <input type="text" id="file-path-input" placeholder="Enter file name (e.g. sampletextfile.txt)"
+            onkeydown="if(event.key === 'Enter') fetchPrivateGitHubFile()" />
+        <button onclick="fetchPrivateGitHubFile()">Fetch File</button>
+    </div>
+
+    <pre id="file-content">Enter a file name above and click Fetch File.</pre>
+
+    <script>
+        async function fetchPrivateGitHubFile() {
+            const owner = "D4riru";
+            const repo = "ActivityRepo";
+            const filePath = document.getElementById('file-path-input').value.trim();
+            const branch = "main";
+
+            const token = "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";
+
+            const fileContent = document.getElementById("file-content");
+
+            if (!filePath) {
+                fileContent.textContent = "Please enter a file name first.";
+                return;
+            }
+
+            fileContent.textContent = "Fetching file from GitHub...";
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/vnd.github.v3+json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const content = atob(data.content); // Decode Base64 content
+
+                fileContent.textContent = content;
+            } catch (error) {
+                console.error("Error fetching file:", error);
+                fileContent.textContent = "Failed to load file.";
+            }
+        }
+    </script>
+
+</body>
+
+</html>
