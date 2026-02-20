@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload to Private GitHub Repository</title>
+    <link rel="stylesheet" href="sample_save.css">
+</head>
+
+<body>
+    <h1>Upload to GitHub Repository</h1>
+
+    <div id="upload-container">
+        <input type="file" id="fileInput">
+        <button onclick="uploadFile()">Upload</button>
+        <p id="status-msg">Select a file and click upload.</p>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const statusMsg = document.getElementById('status-msg');
+
+            if (!fileInput.files.length) {
+                statusMsg.textContent = "Please select a file first.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function (event) {
+                const content = event.target.result.split(',')[1]; // Get base64 data
+
+                // Replace with your GitHub credentials
+                const githubUsername = 'D4riru';
+                const repo = 'ActivityRepo';
+                const path = `${file.name}`;
+                const token = "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";
+
+                const apiUrl = `https://api.github.com/repos/${githubUsername}/${repo}/contents/${path}`;
+
+                const headers = {
+                    "Authorization": `token ${token}`,
+                    "Accept": "application/vnd.github.v3+json",
+                    "Content-Type": "application/json"
+                };
+
+                // sha verification
+                let sha = undefined;
+                const checkResponse = await fetch(apiUrl, { headers });
+                if (checkResponse.ok) {
+                    const existing = await checkResponse.json();
+                    sha = existing.sha;
+                }
+
+                const data = {
+                    message: `${sha ? "Updating" : "Adding"} ${file.name} to private repo`,
+                    content: content,
+                    ...(sha && { sha })
+                };
+
+                statusMsg.textContent = "Uploading...";
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: "PUT",
+                        headers,
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        statusMsg.textContent = `File ${sha ? "updated" : "uploaded"} successfully! View it here: ${result.content.html_url}`;
+                    } else {
+                        statusMsg.textContent = `Error: ${result.message}`;
+                    }
+                } catch (error) {
+                    console.error("Error uploading file:", error);
+                    statusMsg.textContent = "Upload failed.";
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+
+</html>
